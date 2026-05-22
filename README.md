@@ -1,1 +1,3 @@
-# music_recommendation_algorithm
+# Music Recommendation Algorithm
+
+This project explores unsupervised machine learning techniques applied to a real-world music dataset spanning songs from 1950 to 2019, sourced from a 2020 research paper titled Music Dataset: Lyrics and Metadata from 1950 to 2019. As a data scientist at a Series B music start-up, the goal is to build a song recommendation engine from scratch by clustering unlabeled tracks based on their lyrical and continuous audio features. The pipeline covers the full ML workflow — from exploratory data analysis and preprocessing to dimensionality reduction, unsupervised modeling, and a final report.
