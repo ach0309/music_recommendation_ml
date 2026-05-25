@@ -1,17 +1,11 @@
 
 # Music Recommendation Project
-
-This project explores unsupervised machine learning techniques applied to a real-world music dataset spanning songs from 1950 to 2019. As a data scientist at a Series B music start-up, the goal is to build a song recommendation engine from scratch by clustering unlabeled tracks based on their lyrical and continuous audio features. The workflow includes exploratory data analysis, preprocessing, dimensionality reduction, unsupervised modeling, and a final report.
-
-## About
-
-This project uses unsupervised learning to identify patterns in song lyrics and metadata to generate meaningful song clusters. These clusters form the foundation of a recommendation system that groups similar tracks together without relying on labeled training data.
-
+This project explores unsupervised machine learning techniques applied to a real-world music dataset spanning songs from 1950 to 2019. As a data scientist at a Series B music start-up, the goal is to build a song recommendation engine from scratch by clustering unlabeled tracks based on their lyrical and continuous audio features (identifying patterns in song lyrics and metadata to generate meaningful song clusters that group similar tracks together without relying on labeled training data).
 The dataset includes artist information, song metadata, pre-tokenized lyrics, and a set of engineered lyrical features representing thematic content. The project focuses on understanding these features, reducing dimensionality, and applying clustering algorithms to uncover structure in the music space.
 
-Read more about the dataset features in the [features_info.md](docs/features_info.md) file.
+Read more about the dataset features and column descriptions in [features_info.md](docs/features_info.md).
 
-[Final Report Q&A](report_qa.md)
+Full answers to the 5 project questions in [Final Report Q&A](report_qa.md).
 
 
 ## Project Structure
@@ -20,29 +14,40 @@ Read more about the dataset features in the [features_info.md](docs/features_inf
 music_recommendation_ml/
 │
 ├── code/
-│   ├── eda.ipynb
-│   ├── transform.ipynb
-│   ├── model.ipynb
+│   ├── 1_explore.ipynb        # EDA — univariate, bivariate, multivariate analysis
+│   ├── 2_transform.ipynb      # Cleaning, feature selection, scaling, PCA
+│   ├── 3_model.ipynb          # KMeans training, elbow + silhouette evaluation
+│   └── 4_predict.ipynb        # Cluster prediction on new user listening history
 │
 ├── data/
-│   ├── recommend.csv
-│   ├── train.csv
+│   ├── train.csv              # Raw training data
+│   ├── recommend.csv          # New user listening history (test set)
+│   ├── cleaned_data/
+│   │   ├── cleaned_train.csv          # 15 EDA-informed scaled features
+│   │   └── cleaned_train_pca.csv      # PCA-reduced version (7 components)
+│   └── clustered_data/
+│       ├── clustered_train.csv        # Training data with cluster labels
+│       └── clustered_recommend.csv    # New user history with cluster labels
 │
 ├── docs/
-│   ├── features_info.md
+│   ├── 1_report_qa.md         # Final Q&A report
+│   └── features_info.md       # Dataset column descriptions
 │
 ├── README.md
-├── .gitignore
-└── .DS_Store
+└── .gitignore
 ```
 
 ### Notebook 1 — EDA (Hypothesis Formulation)
-Univariate, bivariate, and multivariate exploration of the dataset.  
+Univariate, bivariate, and multivariate exploration to understand the dataset and formulate a clustering hypothesis.
+
 Key findings:
-- Hip hop is a strong lyrical outlier — its mean obscene score (r=0.41) is roughly 4–6x higher than every other genre, which all fall between 0.06 and 0.14. This matters for clustering because obscene has by far the highest variance across genre group means, meaning it's the single most powerful feature for separating songs. In practice, this likely means KMeans will carve out a dedicated "hip hop cluster" almost automatically, driven almost entirely by this one feature rather than a combination of features.
-- `topic` column is derived directly from lyrical scores, making it redundant
-- No feature pairs exceed r=0.5, so no features were dropped for correlation
-- Genre composition shifted by decade — hip hop absent before 1990s
+- **28,362 songs** across 24 features. 4 dominant genres: Pop, Blues, Rock, and Country
+![alt text](docs/genre_topic_score_distributions.png)
+
+- **Hip hop is a strong lyrical outlier** — its mean `obscene` score (r=0.41) is 4–6× higher than every other genre (all between 0.06–0.14). This single feature has the highest variance across genre group means, making it the most powerful separator.
+- **No feature pair exceeded r = 0.50**, so no features were dropped for multicollinearity
+- **Genre composition shifted by decade** — Hip Hop is absent before the 1990s; Pop and Rock dominate earlier decades. This temporal skew means `age` encodes genre-era information implicitly.
+- **`topic` is derived from lyrical scores** — each topic label simply reflects whichever lyrical dimension scored highest for that song, making it redundant as a feature.
 
 We hypothesize that K‑Means will identify approximately four clusters. These clusters likely correspond to the dominant lyrical‑feature patterns we observed:
 1. High-obscene → hiphop songs
@@ -52,36 +57,81 @@ We hypothesize that K‑Means will identify approximately four clusters. These c
 
 
 ### Notebook 2 — Transform (Cleaning, Wrangling & Preprocessing)
-Data cleaning, feature scaling, and PCA analysis.  
-Key decisions:
-- Dropped: `Unnamed: 0`, `artist_name`, `track_name`, `lyrics`, `age`, `release_date`, `topic`
-- No nulls or duplicates found
-- Applied `StandardScaler` to normalize all numeric features
-- PCA run for analysis — clustering performed on original scaled features due to low inter-feature correlation
+EDA-informed decisions on what to keep, what to drop, and whether PCA adds value.
+
+**Columns dropped:**
+
+| Column | Reason |
+|--------|--------|
+| `Unnamed: 0` | Row index artifact |
+| `artist_name`, `track_name` | Identifiers, not features |
+| `lyrics` | Raw text — not used in this pipeline |
+| `release_date` | Would anchor clusters to era, not lyrical content |
+| `age` | Redundant with `release_date`; implicitly encodes genre era |
+| `topic` | Derived directly from lyrical scores — circular |
+| `len` | Measures song length, not lyrical theme; the only non-0–1 column |
+
+
+`genre` was not included in training (would bias clusters toward known boundaries and defeat the point of unsupervised learning)
+
+**Scaling:** The 15 remaining lyrical features are already on a uniform 0–1 scale, so no `StandardScaler` was needed. Each feature contributes equally to KMeans distance without normalization.
+
+**PCA:** Run for comparison against the raw 15-feature set. Results showed:
+- 7 components cross the 80% variance threshold
+- PCA compresses poorly (expected — low inter-feature correlation), but was still tested against the raw set using silhouette scoring to let the data decide
+![alt text](docs/pca.png)
+
+Outputs saved: `cleaned_train.csv` (15 EDA-informed raw features) and `cleaned_train_pca.csv` (7 PCA-reduced components).
 
 
 
-### Notebook 3 — Model (Creation & Evaluation)
+### Notebook 3 — KMeans Training & Evaluation
+Two feature sets (raw vs. PCA-reduced) evaluated side-by-side using the Elbow Method and Silhouette Scoring to pick the best K.
 
-EDA-informed 15 features → KMeans → elbow + silhouette
-PCA on EDA-informed 15 features → KMeans → elbow + silhouette
-Compare, pick the better one, move on
+**Elbow Method:**
+- EDA-Informed (Raw): flattens around K=6–7
+- PCA-Reduced: more defined elbow at K=7
+
+**Silhouette Scores:** PCA-reduced consistently outperformed raw features — removing inter-feature noise tightened the clusters. Peak score: **K=7, silhouette = 0.4338**
+![alt text](docs/sil_scores.png)
+
+**Final model:** `KMeans(n_clusters=7, init='k-means++', n_init=10, random_state=42)` on PCA-reduced features.
+
+**Cluster profiles:**
+![alt text](docs/mean_lyrical_feat_by_cluster.png)
+
+| Cluster | Name | Dominant Feature | Description |
+|---------|------|-----------------|-------------|
+| 0 | Dark & Aggressive | `violence` | High violence, low romantic and gospel. Confrontational lyrics. |
+| 1 | Songs About Music | `music` | High music score — songs that reference music itself. Likely jazz/blues. |
+| 2 | Reflective / Philosophical | `world/life` | High world/life. Songs about society, existence, and meaning. |
+| 3 | Romantic Ballads | `romantic` | High romantic + dating, low violence and obscene. Classic love songs. |
+| 4 | Explicit / Hip Hop | `obscene` | High obscene — explicit content, money, lifestyle. Skews heavily hip hop. |
+| 5 | Melancholic | `sadness` | High sadness + feelings. Heartbreak and loss. Common in blues and country. |
+| 6 | Nightlife & Energy | `night/time` | High night/time + shake the audience. High-energy songs about dancing and nightlife. |
+
+Clustered dataset saved as `clustered_train.csv`.
 
 
+### Notebook 4 — Recommendation via Cluster Prediction
+Treats `recommend.csv` as a user's listening history (10 songs). The trained KMeans model assigns each song a cluster, and the top 3 dominant clusters form the user's taste profile.
 
-Cluster 0 — high violence (0.430) → dark, aggressive songs
-Cluster 1 — high music (0.412) → songs about music itself, likely jazz/blues
-Cluster 2 — high world/life (0.425) → reflective, philosophical songs
-Cluster 3 — high romantic (0.399) → love songs
-Cluster 4 — high obscene (0.458) → explicit content, likely hip hop
-Cluster 5 — high sadness (0.431) → emotional, melancholic songs
-Cluster 6 — high night/time (0.371) → nightlife, time-themed songs
+**User's taste profile:**
+- Dark & Aggressive (3 songs)
+- Melancholic (2 songs)
+- Reflective / Philosophical (2 songs)
 
+Clustered recommend is saved to `clustered_recommend.csv` and final recommendations saved to `recommendations.csv`.
 
-### Notebook 4 — Predict Using Recommended Data
+Sample recommendations:
 
-In this notebook we treat `recommend.csv` as a user's **listening history** — 10 songs they have already listened to. We use our trained KMeans model to:
-
-1. Predict which cluster each song in their history belongs to
-2. Identify their top 3 dominant clusters — their taste profile
-3. Recommend new songs from `clustered_train.csv` that match those clusters
+| Artist | Song | Genre | Cluster |
+|--------|------|-------|---------|
+| Rush | Losing It | Rock | Dark & Aggressive |
+| Dr. Feelgood | Milk and Alcohol | Blues | Dark & Aggressive |
+| Mercyful Fate | Evil | Rock | Dark & Aggressive |
+| UNKLE | Unreal | Jazz | Reflective / Philosophical |
+| The Doors | End of the Night | Rock | Reflective / Philosophical |
+| The Youngbloods | Beautiful | Country | Melancholic |
+| John Coltrane | All or Nothing at All | Jazz | Melancholic |
+| Hank Thompson | I Was the First One | Country | Melancholic |
