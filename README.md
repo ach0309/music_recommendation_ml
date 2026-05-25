@@ -84,7 +84,6 @@ EDA-informed decisions on what to keep, what to drop, and whether PCA adds value
 
 **PCA:** Run for comparison against the raw 15-feature set. Results showed:
 - 7 components cross the 80% variance threshold
-- PCA compresses poorly (expected — low inter-feature correlation), but was still tested against the raw set using silhouette scoring to let the data decide
 ![alt text](docs/pca.png)
 
 Outputs saved: `cleaned_train.csv` (15 EDA-informed raw features) and `cleaned_train_pca.csv` (7 PCA-reduced components).
