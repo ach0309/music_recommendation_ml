@@ -143,3 +143,9 @@ Sample recommendations:
 | The Youngbloods | Beautiful | Country | Melancholic |
 | John Coltrane | All or Nothing at All | Jazz | Melancholic |
 | Hank Thompson | I Was the First One | Country | Melancholic |
+
+
+### Future Improvements:
+- Explore how musical era affects lyrical themes. For example, whether older songs cluster differently from newer ones and if decade is a meaningful hidden structure the model missed.
+- Add the lyrics column back and try a Word2Vec model to analyze raw lyrical content, reduce word vectors to 2D with PCA, and visualize the lyrical landscape of the dataset.
+- Build a simple user-facing interface where someone can input a song they like and get back recommendations in real time.
