@@ -74,3 +74,12 @@ Cluster 3 — high romantic (0.399) → love songs
 Cluster 4 — high obscene (0.458) → explicit content, likely hip hop
 Cluster 5 — high sadness (0.431) → emotional, melancholic songs
 Cluster 6 — high night/time (0.371) → nightlife, time-themed songs
+
+
+### Notebook 4 — Predict Using Recommended Data
+
+In this notebook we treat `recommend.csv` as a user's **listening history** — 10 songs they have already listened to. We use our trained KMeans model to:
+
+1. Predict which cluster each song in their history belongs to
+2. Identify their top 3 dominant clusters — their taste profile
+3. Recommend new songs from `clustered_train.csv` that match those clusters
