@@ -32,6 +32,12 @@ music_recommendation_ml/
 ├── docs/
 │   ├── 1_report_qa.md         # Final Q&A report
 │   └── features_info.md       # Dataset column descriptions
+│   ├── clusters_2d.png
+│   ├── clusters_3d.png
+│   ├── genre_topic_score_distributions.png
+│   ├── mean_lyrical_feat_by_cluster.png
+│   ├── pca.png
+│   └── sil_scores.png
 │
 ├── README.md
 └── .gitignore
