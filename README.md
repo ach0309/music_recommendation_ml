@@ -64,3 +64,13 @@ Key decisions:
 EDA-informed 15 features → KMeans → elbow + silhouette
 PCA on EDA-informed 15 features → KMeans → elbow + silhouette
 Compare, pick the better one, move on
+
+
+
+Cluster 0 — high violence (0.430) → dark, aggressive songs
+Cluster 1 — high music (0.412) → songs about music itself, likely jazz/blues
+Cluster 2 — high world/life (0.425) → reflective, philosophical songs
+Cluster 3 — high romantic (0.399) → love songs
+Cluster 4 — high obscene (0.458) → explicit content, likely hip hop
+Cluster 5 — high sadness (0.431) → emotional, melancholic songs
+Cluster 6 — high night/time (0.371) → nightlife, time-themed songs
