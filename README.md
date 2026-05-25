@@ -11,6 +11,8 @@ The dataset includes artist information, song metadata, pre-tokenized lyrics, an
 
 Read more about the dataset features in the [features_info.md](docs/features_info.md) file.
 
+[Final Report Q&A](report_qa.md)
+
 
 ## Project Structure
 
