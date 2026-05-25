@@ -110,6 +110,9 @@ Two feature sets (raw vs. PCA-reduced) evaluated side-by-side using the Elbow Me
 | 5 | Melancholic | `sadness` | High sadness + feelings. Heartbreak and loss. Common in blues and country. |
 | 6 | Nightlife & Energy | `night/time` | High night/time + shake the audience. High-energy songs about dancing and nightlife. |
 
+![alt text](docs/clusters_2d.png)
+![alt text](docs/clusters_3d.png)
+
 Clustered dataset saved as `clustered_train.csv`.
 
 
